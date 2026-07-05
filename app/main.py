@@ -33,3 +33,10 @@ app.include_router(admin.router)   # <-- harus ada
 @app.get("/")
 def root():
     return {"app": "Sumut Agri API", "status": "active", "version": "1.0.0"}
+
+@app.get("/create-tables")
+def create_tables():
+    from app.database import Base, engine
+    from app.models import User, Komoditas, Produksi, HargaHarian, Distribusi
+    Base.metadata.create_all(bind=engine)
+    return {"message": "Semua tabel berhasil dibuat"}
