@@ -1,28 +1,20 @@
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-# Railway akan otomatis set DATABASE_URL jika PostgreSQL plugin terpasang
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./sumut_agri.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-if "postgresql" in DATABASE_URL:
-    # PostgreSQL
-    engine = create_engine(DATABASE_URL)
-else:
-    # SQLite (fallback untuk development lokal)
+print("=" * 60)
+print("DATABASE_URL =", DATABASE_URL)
+print("=" * 60)
+
+if DATABASE_URL:
     engine = create_engine(
         DATABASE_URL,
+        echo=True
+    )
+else:
+    print("DATABASE_URL TIDAK DITEMUKAN!")
+    engine = create_engine(
+        "sqlite:///./sumut_agri.db",
         connect_args={"check_same_thread": False}
     )
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
