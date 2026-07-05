@@ -1,38 +1,43 @@
-import os
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.openapi.utils import get_openapi
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.database import engine, Base
+# Import models dipastikan tetap ada agar SQLAlchemy tahu tabel apa saja yang harus dibuat
+from app.models import User, Komoditas, Produksi, HargaHarian, Distribusi
+from app.routers import users, komoditas, harga, produksi, admin, distribusi
+
+# Menggunakan lifespan untuk menggantikan @app.on_event("startup")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Logika saat aplikasi baru dinyalakan (Startup)
+    Base.metadata.create_all(bind=engine)
+    yield
+    # Logika saat aplikasi dimatikan (Shutdown) - jika ada bisa ditaruh di sini
 
 app = FastAPI(
     title="Sumut Agri API",
-    docs_url=None,      # Matikan default docs agar tidak bisa diakses langsung
-    redoc_url=None,     # Matikan default redoc
-    openapi_url=None,   # Matikan default openapi.json
-    lifespan=lifespan
+    description="Sistem Pemantauan Komoditas Pertanian Sumatera Utara",
+    version="1.0.0",
+    lifespan=lifespan  # Daftarkan lifespan di sini
 )
 
-security = HTTPBasic()
+# CORS (Sangat cocok untuk dev, sesuaikan domainnya saat production nanti)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Ganti dengan username & password yang Anda inginkan (sebaiknya taruh di env variable)
-SWAGGER_USER = os.getenv("SWAGGER_USER", "admin_sumut")
-SWAGGER_PASS = os.getenv("SWAGGER_PASS", "RahasiaAgri2026")
+# Registrasi Router
+app.include_router(users.router)
+app.include_router(komoditas.router)
+app.include_router(harga.router)
+app.include_router(produksi.router)
+app.include_router(admin.router)
+app.include_router(distribusi.router)
 
-def authenticate_swagger(credentials: HTTPBasicCredentials = Depends(security)):
-    if credentials.username != SWAGGER_USER or credentials.password != SWAGGER_PASS:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
-# Buat route custom untuk docs yang dilindungi auth
-@app.get("/docs", include_in_schema=False)
-async def overridden_swagger(username: str = Depends(authenticate_swagger)):
-    return get_swagger_ui_html(openapi_url="/openapi.json", title=app.title + " - Swagger UI")
-
-# Buat route custom untuk openapi.json yang dilindungi auth
-@app.get("/openapi.json", include_in_schema=False)
-async def get_open_api_endpoint(username: str = Depends(authenticate_swagger)):
-    return get_openapi(title=app.title, version=app.version, routes=app.routes)
+@app.get("/")
+def root():
+    return {"app": "Sumut Agri API", "status": "active", "version": "1.0.0"}
