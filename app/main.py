@@ -4,7 +4,7 @@ from app.database import engine, Base
 from app.models import User, Komoditas, Produksi, HargaHarian, Distribusi
 from app.routers import users, komoditas, harga, produksi, admin, distribusi
 
-# Buat tabel
+# Buat tabel (otomatis saat startup)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -27,16 +27,14 @@ app.include_router(users.router)
 app.include_router(komoditas.router)
 app.include_router(harga.router)
 app.include_router(produksi.router)
-app.include_router(admin.router)         # pastikan file routers/admin.py ada
-app.include_router(distribusi.router)    # pastikan file routers/distribusi.py ada
-app.include_router(admin.router)   # <-- harus ada
+app.include_router(admin.router)
+app.include_router(distribusi.router)
+
 @app.get("/")
 def root():
     return {"app": "Sumut Agri API", "status": "active", "version": "1.0.0"}
 
 @app.get("/create-tables")
 def create_tables():
-    from app.database import Base, engine
-    from app.models import User, Komoditas, Produksi, HargaHarian, Distribusi
     Base.metadata.create_all(bind=engine)
     return {"message": "Semua tabel berhasil dibuat"}
