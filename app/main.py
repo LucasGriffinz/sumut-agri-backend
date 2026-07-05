@@ -13,7 +13,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Untuk production, batasi ke domain frontend
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,9 +27,9 @@ app.include_router(produksi.router)
 app.include_router(admin.router)
 app.include_router(distribusi.router)
 
+# PENTING: create_all dipindahkan ke dalam event startup
 @app.on_event("startup")
 def on_startup():
-    """Buat tabel jika belum ada, setelah koneksi DB siap."""
     Base.metadata.create_all(bind=engine)
 
 @app.get("/")
