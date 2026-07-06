@@ -34,7 +34,8 @@ class UserOut(BaseModel):
     no_hp: Optional[str] = None
     alamat: Optional[str] = None
     kabupaten_kota: Optional[str] = None
-    created_at: datetime
+    # PERBAIKAN: Diubah menjadi Optional agar menerima nilai null dari PostgreSQL Railway
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -51,7 +52,8 @@ class KomoditasOut(BaseModel):
     nama_komoditas: str
     satuan: str
     deskripsi: Optional[str] = None
-    created_at: datetime
+    # PERBAIKAN: Antisipasi null pada metadata komoditas hulu
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -70,7 +72,8 @@ class HargaHarianOut(BaseModel):
     harga_per_satuan: float
     tanggal: date
     pasar_sumber: Optional[str] = None
-    created_at: datetime
+    # PERBAIKAN: Antisipasi null pada pencatatan log harga
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -84,7 +87,6 @@ class ProduksiCreate(BaseModel):
     tanggal_panen: Optional[date] = None
     lokasi: Optional[str] = None
 
-# Skema khusus Petugas saat menyetujui/menolak ajuan panen petani
 class ProduksiVerifikasi(BaseModel):
     status: str  # 'disetujui' atau 'ditolak'
 
@@ -97,7 +99,8 @@ class ProduksiOut(BaseModel):
     tanggal_panen: date
     lokasi: Optional[str] = None
     status: str
-    created_at: datetime
+    # PERBAIKAN: Antisipasi null pada panen masuk
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -123,8 +126,9 @@ class DistribusiOut(BaseModel):
     tujuan: str
     tanggal_kirim: date
     status: StatusDistribusi
-    created_at: datetime
-    updated_at: datetime
+    # PERBAIKAN: Antisipasi data null pada log distribusi logistik pangan
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
