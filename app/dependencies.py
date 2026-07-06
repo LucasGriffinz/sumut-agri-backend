@@ -7,53 +7,53 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, UserRole
 
-# 1. Tentukan ke mana FastAPI harus mencari token.
-# Di dalam app/dependencies.py, sesuaikan baris ini:
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/login")
+# 1. Pastikan tokenUrl mengarah tepat ke endpoint login Anda yang mengembalikan token
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/login", auto_error=False)
 
-# Ambil konfigurasi JWT dari security (pastikan sama dengan di security.py)
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "SUPER_SECRET_KEY_SUMUT_AGRI_2026")
 ALGORITHM = "HS256"
 
-# ==================== FUNGSI PROTEKSI 1: VERIFIKASI TOKEN ====================
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
-    """
-    Fungsi ini mengekstrak token JWT, mendekripsinya, 
-    dan memastikan user tersebut benar-benar terdaftar di database.
-    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Sesi Anda telah berakhir atau token tidak valid. Silakan login kembali.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     
+    # Jika token sama sekali tidak dikirim oleh frontend
+    if not token:
+        print("[AUTH ERROR]: Token tidak ditemukan di Header HTTP!")
+        raise credentials_exception
+        
     try:
-        # Dekripsi token JWT menggunakan SECRET_KEY
+        # Dekripsi token JWT
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")  # Kita menggunakan email sebagai sub saat login
+        email: str = payload.get("sub")
         
         if email is None:
+            print("[AUTH ERROR]: Payload sub (email) kosong!")
             raise credentials_exception
             
-    except jwt.PyJWTError:
-        # Jika token expired, corrupt, atau dimanipulasi, langsung lempar error
+    except jwt.PyJWTError as e:
+        print(f"[AUTH ERROR]: Gagal dekripsi JWT -> {str(e)}")
         raise credentials_exception
 
-    # Cari user di database berdasarkan email dari token
+    # Cari user di database
     user = db.query(User).filter(User.email == email).first()
     if user is None:
+        print(f"[AUTH ERROR]: User dengan email {email} tidak terdaftar di DB!")
         raise credentials_exception
         
-    return user  # Mengembalikan objek User yang sedang login
+    return user
 
 
-# ==================== FUNGSI PROTEKSI 2: RBAC UNTUK ADMIN ====================
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
-    """
-    Hanya meloloskan user yang memiliki role ADMIN.
-    Cocok untuk website kendali pusat.
-    """
-    if current_user.role != UserRole.ADMIN:
+    # Menggunakan perbandingan string .value agar toleran terhadap objek Enum vs String DB
+    current_role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+    
+    print(f"[RBAC CHECK]: User {current_user.email} memiliki role {current_role}")
+    
+    if current_role.upper() != "ADMIN":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Akses Ditolak! Endpoint ini hanya khusus untuk Admin Utama."
@@ -61,13 +61,10 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
-# ==================== FUNGSI PROTEKSI 3: RBAC UNTUK PETUGAS ====================
 def require_petugas(current_user: User = Depends(get_current_user)) -> User:
-    """
-    Meloloskan user yang memiliki role PETUGAS atau ADMIN (karena Admin punya hak tertinggi).
-    Cocok untuk verifikasi panen dan input harga pasar.
-    """
-    if current_user.role not in [UserRole.ADMIN, UserRole.PETUGAS]:
+    current_role = current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role)
+    
+    if current_role.upper() not in ["ADMIN", "PETUGAS"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Akses Ditolak! Hanya Petugas Lapangan atau Admin yang diizinkan."
