@@ -52,23 +52,23 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Email atau password salah")
     
     # BUAT TOKEN JWT DI SINI
-    # Simpan email, id, dan role ke dalam token payload
     access_token = create_access_token(
-        data={"sub": user.email, "id": user.id, "role": user.role}
+        data={"sub": user.email, "id": user.id, "role": user.role.value} # Paksa .value murni string
     )
     
-    # PERBAIKAN: Mengembalikan token beserta metadata profil user untuk kemudahan UI Android & Web Admin
+    # PERBAIKAN UTAMA: Tambahkan .value pada user.role agar yang dikirim ke Android 
+    # adalah string murni "PETANI", "PETUGAS", atau "ADMIN", bukan objek Enum!
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
             "nama_lengkap": user.nama_lengkap,
             "email": user.email,
-            "role": user.role,
+            "role": user.role.value,  # <--- Perbaikan krusial di sini
             "kabupaten_kota": user.kabupaten_kota
         }
     }
-
+    
 # ==================== 3. GET ALL USERS (DIKUNCI: HANYA ADMIN YANG BISA LIHAT) ====================
 @router.get("/", response_model=list[UserOut])
 def get_all_users(db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
