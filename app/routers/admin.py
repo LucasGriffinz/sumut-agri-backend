@@ -14,19 +14,20 @@ def create_user_by_admin(
     role: UserRole = Query(..., description="Role: admin, petugas, petani"),
     db: Session = Depends(get_db)
 ):
-    # Cek apakah email sudah terdaftar
-    existing = db.query(User).filter(User.email == data.email).first()
+    # 1. Cek apakah email sudah terdaftar (Dipaksa lowercase untuk konsistensi data)
+    email_clean = data.email.lower()
+    existing = db.query(User).filter(User.email == email_clean).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email sudah terdaftar")
 
-    # Validasi role
+    # 2. Validasi role sesuai dengan Enum UserRole
     if role not in [UserRole.ADMIN, UserRole.PETUGAS, UserRole.PETANI]:
         raise HTTPException(status_code=400, detail="Role tidak valid")
 
-    # Buat user dengan password ter-hash
+    # 3. Buat user dengan password ter-hash dan simpan ke database PostgreSQL
     user = User(
         nama_lengkap=data.nama_lengkap,
-        email=data.email,
+        email=email_clean,
         password_hash=pwd_context.hash(data.password),
         role=role,
         no_hp=data.no_hp,

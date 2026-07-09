@@ -130,5 +130,8 @@ class DistribusiOut(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+class ResetPasswordInput(BaseModel):
+    new_password: str
+
     class Config:
         from_attributes = True
