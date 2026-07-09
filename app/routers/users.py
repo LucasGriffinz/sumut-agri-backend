@@ -100,12 +100,7 @@ def reset_user_password(
                 status_code=403, 
                 detail="Akses ditolak. Petugas hanya diizinkan mereset password Petani."
             )
-        # Petugas hanya boleh mereset petani di wilayah operasionalnya sendiri
-        if current_user.kabupaten_kota != target_user.kabupaten_kota:
-            raise HTTPException(
-                status_code=403, 
-                detail="Akses ditolak. Petani berada di luar wilayah operasional Anda."
-            )
+        # PERBAIKAN: Validasi kabupaten_kota dihapus agar Petugas bebas mereset di semua wilayah.
             
     elif current_user.role == UserRole.ADMIN:
         # Admin berhak mutlak mereset siapa saja (ADMIN, PETUGAS, PETANI)
@@ -114,7 +109,7 @@ def reset_user_password(
         # Mencegah role PETANI melakukan manipulasi HTTP Request via tools luar
         raise HTTPException(status_code=403, detail="Tindakan ilegal. Anda tidak memiliki otoritas.")
     
-    # c. Enkripsi password baru dan simpan kembali ke database lokal/cloud Railway
+    # c. Enkripsi password baru dan simpan kembali ke database cloud Railway
     target_user.password_hash = hash_password(payload.new_password)
     db.commit()
     
