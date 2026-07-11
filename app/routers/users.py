@@ -121,7 +121,7 @@ def reset_user_password(
         "message": f"Password untuk {target_user.nama_lengkap} berhasil diperbarui."
     }
 
-@router.get("/api/petani-lapangan", response_model=List[UserOut])
+@router.get("/api/petani-lapangan", response_model=list[UserOut])
 def get_daftar_petani_lapangan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) # Pastikan token divalidasi
