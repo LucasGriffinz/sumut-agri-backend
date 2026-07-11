@@ -25,6 +25,11 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserOut  # Sekarang dijamin aman dan terdefinisi!
 
 # ===== Komoditas =====
 class KomoditasCreate(BaseModel):
