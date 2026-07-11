@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, UserRole
-from app.schemas import UserRegister, UserLogin, UserOut, ResetPasswordInput
+# 🌟 PERBAIKAN: Import LoginResponse yang baru dibuat dari schemas
+from app.schemas import UserRegister, UserLogin, UserOut, ResetPasswordInput, LoginResponse
 # 1. IMPORT DARI SECURITY DAN DEPENDENCIES YANG SUDAH DIBUAT
 from app.security import hash_password, verify_password, create_access_token
 from app.dependencies import require_admin, get_current_user
@@ -44,7 +45,8 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     return user
 
 # ==================== 2. ENDPOINT LOGIN (MENGHASILKAN JWT TOKEN) ====================
-@router.post("/login")
+# 🌟 PERBAIKAN UTAMA: Tambahkan response_model=LoginResponse agar terstruktur resmi di Swagger
+@router.post("/login", response_model=LoginResponse)
 def login(data: UserLogin, db: Session = Depends(get_db)):
     # Pencarian disamakan ke lowercase agar case-insensitive saat login
     user = db.query(User).filter(User.email == data.email.lower()).first()
@@ -56,16 +58,18 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
         data={"sub": user.email, "id": user.id, "role": user.role.value} # Paksa .value murni string
     )
     
-    # PERBAIKAN UTAMA: Tambahkan .value pada user.role agar yang dikirim ke Android 
-    # adalah string murni "PETANI", "PETUGAS", atau "ADMIN", bukan objek Enum!
+    # 🌟 PERBAIKAN SOLID: Mengembalikan seluruh field data user secara jujur dan lengkap ke Android Studio
     return {
         "access_token": access_token,
         "token_type": "bearer",
         "user": {
+            "id": user.id,  # <--- KUNCI UTAMA: Mengirimkan ID asli dari PostgreSQL Railway ke mobile
             "nama_lengkap": user.nama_lengkap,
             "email": user.email,
-            "role": user.role.value,  # <--- Perbaikan krusial di sini
-            "kabupaten_kota": user.kabupaten_kota
+            "role": user.role.value,  
+            "kabupaten_kota": user.kabupaten_kota,
+            "no_hp": user.no_hp,
+            "alamat": user.alamat
         }
     }
     
@@ -100,7 +104,6 @@ def reset_user_password(
                 status_code=403, 
                 detail="Akses ditolak. Petugas hanya diizinkan mereset password Petani."
             )
-        # PERBAIKAN: Validasi kabupaten_kota dihapus agar Petugas bebas mereset di semua wilayah.
             
     elif current_user.role == UserRole.ADMIN:
         # Admin berhak mutlak mereset siapa saja (ADMIN, PETUGAS, PETANI)
