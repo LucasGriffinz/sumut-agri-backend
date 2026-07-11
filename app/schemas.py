@@ -27,24 +27,23 @@ class UserLogin(BaseModel):
     password: str
 
 class UserOut(BaseModel):
-    id: int  # Field ini sudah benar ada di sini
+    id: int
     nama_lengkap: str
     email: str
     role: UserRole
     no_hp: Optional[str] = None
     alamat: Optional[str] = None
     kabupaten_kota: Optional[str] = None
-    # PERBAIKAN: Diubah menjadi Optional agar menerima nilai null dari PostgreSQL Railway
     created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
-# 🌟 PERBAIKAN UTAMA: Schema Response Login yang Kokoh & Sesuai Best Practice REST API
+# 🌟 POSISI BARU: Diletakkan di bawah UserOut agar Python sudah mengenali class UserOut
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
-    user: UserOut  # Menjamin semua field di UserOut (termasuk ID) ikut dikirim ke Android
+    user: UserOut  # Sekarang dijamin aman dan terdefinisi!
 
 
 # ==================== 3. KOMODITAS SCHEMAS ====================
