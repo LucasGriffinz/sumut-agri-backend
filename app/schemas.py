@@ -12,12 +12,6 @@ class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
 
-# 🌟 PERBAIKAN UTAMA: Schema Response Login yang Kokoh & Sesuai Best Practice REST API
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str
-    user: UserOut  # Menjamin semua field di UserOut (termasuk ID) ikut dikirim ke Android
-
 
 # ==================== 2. USER SCHEMAS ====================
 class UserRegister(BaseModel):
@@ -45,6 +39,12 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# 🌟 PERBAIKAN UTAMA: Schema Response Login yang Kokoh & Sesuai Best Practice REST API
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserOut  # Menjamin semua field di UserOut (termasuk ID) ikut dikirim ke Android
 
 
 # ==================== 3. KOMODITAS SCHEMAS ====================
