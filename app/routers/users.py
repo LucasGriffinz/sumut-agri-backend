@@ -120,3 +120,16 @@ def reset_user_password(
         "status": "success", 
         "message": f"Password untuk {target_user.nama_lengkap} berhasil diperbarui."
     }
+
+@router.get("/api/petani-lapangan", response_model=List[UserOut])
+def get_daftar_petani_lapangan(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) # Pastikan token divalidasi
+):
+    # Validasi: Izinkan jika yang meminta adalah PETUGAS atau ADMIN
+    if current_user.role not in ["PETUGAS", "ADMIN"]:
+        raise HTTPException(status_code=403, detail="Hanya petugas yang dapat mengakses data ini")
+        
+    # Hanya ambil user yang role-nya PETANI
+    daftar_petani = db.query(User).filter(User.role == "PETANI").all()
+    return daftar_petani
