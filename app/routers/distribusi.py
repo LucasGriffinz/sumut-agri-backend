@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models import Distribusi, User, StatusDistribusi
 from app.schemas import DistribusiCreate, DistribusiUpdateStatus, DistribusiOut
@@ -15,7 +15,9 @@ def get_all_distribusi(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    return db.query(Distribusi).all()
+    # Digunakan joinedload (jika di models.py sudah ada relationship) atau query standar
+    # Mengurutkan dari ID terbesar/terbaru agar status kiriman terbaru muncul di atas
+    return db.query(Distribusi).order_by(Distribusi.id.desc()).all()
 
 
 # ==================== 2. CATAT DISTRIBUSI BARU (KHUSUS PETUGAS) ====================
@@ -34,7 +36,7 @@ def input_distribusi(
         asal=data.asal,
         tujuan=data.tujuan,
         tanggal_kirim=data.tanggal_kirim,
-        status=StatusDistribusi.DIKIRIM  # Default awal saat diinput
+        status=StatusDistribusi.DIKIRIM if hasattr(StatusDistribusi, 'DIKIRIM') else data.status
     )
     
     db.add(new_distribusi)
@@ -44,7 +46,7 @@ def input_distribusi(
 
 
 # ==================== 3. UPDATE STATUS DISTRIBUSI (KHUSUS PETUGAS) ====================
-# Digunakan untuk mengubah status (misal: 'dikirim' menjadi 'dalam_perjalanan' atau 'sampai')
+# Digunakan untuk mengubah status (misal: 'dikirim' menjadi 'transit' atau 'selesai')
 @router.patch("/update-status/{distribusi_id}", response_model=DistribusiOut)
 def update_status_distribusi(
     distribusi_id: int,
@@ -66,4 +68,6 @@ def update_status_distribusi(
     
     db.commit()
     db.refresh(distribusi)
-    return -distribusi
+    
+    # 🌟 PERBAIKAN: Menghapus minus '-' agar objek mengembalikan data distribusi yang valid
+    return distribusi
