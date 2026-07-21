@@ -111,7 +111,7 @@ class ProduksiOut(BaseModel):
         from_attributes = True
 
 
-# ==================== 6. DISTRIBUSI SCHEMAS (TAMBAHAN BARU) ====================
+# ==================== 6. DISTRIBUSI SCHEMAS ====================
 class DistribusiCreate(BaseModel):
     id_komoditas: int
     jumlah: float
@@ -125,18 +125,43 @@ class DistribusiUpdateStatus(BaseModel):
 class DistribusiOut(BaseModel):
     id: int
     id_komoditas: int
-    id_petugas: int
+    id_petugas: Optional[int] = None
     jumlah: float
     asal: str
     tujuan: str
     tanggal_kirim: date
     status: StatusDistribusi
-    # PERBAIKAN: Antisipasi data null pada log distribusi logistik pangan
+    
+    # 🌟 BONUS OPTIMASI: Nested Pydantic agar Android dapat nama komoditas & petugas secara instan
+    komoditas: Optional[KomoditasOut] = None
+    petugas: Optional[UserOut] = None
+    
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    class Config:
+        from_attributes = True  # 🔑 WAJIB DIBUTUHKAN agar SQLAlchemy Model bisa diconvert ke JSON
+
+
 class ResetPasswordInput(BaseModel):
     new_password: str
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== 7. SCHEMAS WILAYAH ====================
+class DesaOut(BaseModel):
+    id: int
+    id_kecamatan: int
+    nama_desa: str
+
+    class Config:
+        from_attributes = True
+
+class KecamatanOut(BaseModel):
+    id: int
+    nama_kecamatan: str
 
     class Config:
         from_attributes = True

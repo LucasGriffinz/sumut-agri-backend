@@ -70,6 +70,7 @@ app.include_router(harga.router)
 app.include_router(produksi.router)
 app.include_router(admin.router)
 app.include_router(distribusi.router)
+app.include_router(wilayah.router)
 
 @app.get("/")
 def root():
