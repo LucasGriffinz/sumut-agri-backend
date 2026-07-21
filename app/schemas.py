@@ -18,9 +18,11 @@ class UserRegister(BaseModel):
     nama_lengkap: str
     email: EmailStr
     password: str
-    no_hp: Optional[str] = None
-    alamat: Optional[str] = None
-    kabupaten_kota: Optional[str] = None
+    no_hp: str
+    kecamatan: str          # Pilihan dari Dropdown
+    desa: str               # Pilihan dari Dropdown
+    alamat: str
+    kabupaten_kota: str = "Deli Serdang"
 
 class UserLogin(BaseModel):
     email: EmailStr
