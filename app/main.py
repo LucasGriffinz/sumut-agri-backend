@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.database import engine, Base
 # Import models dengan alias agar memicu pendaftaran metadata SQLAlchemy ke Base
 import app.models as models  
-from app.routers import users, komoditas, harga, produksi, admin, distribusi
+from app.routers import users, komoditas, harga, produksi, admin, distribusi, wilayah
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
